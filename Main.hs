@@ -1,6 +1,3 @@
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-
-{-# HLINT ignore "Use lambda-case" #-}
 module Main where
 
 import Control.Applicative (Alternative)
@@ -70,8 +67,7 @@ jsonArray :: Parser JsonValue
 jsonArray =
   JsonArray
     <$> ( charP '['
-            *> ((:) <$> (ws *> jsonValue))
-            <*> many ((ws *> charP ',' <* ws) *> jsonValue)
+            *> sepBy (ws *> charP ',' <* ws) jsonValue
             <* charP ']'
         )
 
@@ -79,7 +75,7 @@ jsonObject :: Parser JsonValue
 jsonObject =
   JsonObject
     <$> ( charP '{'
-            *> (pure [] <|> ((:) <$> (ws *> pair)) <*> many ((ws *> charP ',' <* ws) *> pair))
+            *> sepBy (ws *> charP ',' <* ws) pair
             <* charP '}'
         )
   where
@@ -87,6 +83,9 @@ jsonObject =
 
 ws :: Parser String
 ws = spanP isSpace
+
+sepBy :: Parser a -> Parser b -> Parser [b]
+sepBy sep elem = (:) <$> elem <*> many (sep *> elem) <|> pure []
 
 -- seperated :: Parser a -> Parser b -> Parser [b]
 -- seperated sep element =
