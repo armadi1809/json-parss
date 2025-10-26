@@ -62,6 +62,12 @@ jsonNumber =
           _ -> Nothing
     )
 
+jsonString :: Parser JsonValue
+jsonString = JsonString <$> (charP '"' *> stringLiteral <* charP '"')
+
+stringLiteral :: Parser String
+stringLiteral = spanP (/= '"')
+
 spanP :: (Char -> Bool) -> Parser String
 spanP f =
   Parser
@@ -82,7 +88,7 @@ stringP :: String -> Parser String
 stringP = traverse charP
 
 jsonValue :: Parser JsonValue
-jsonValue = jsonNull <|> jsonBool
+jsonValue = jsonNull <|> jsonBool <|> jsonNumber <|> jsonString
 
 main :: IO ()
 main = undefined
