@@ -3,6 +3,9 @@
 {-# HLINT ignore "Use lambda-case" #-}
 module Main where
 
+import Control.Applicative (Alternative)
+import GHC.Base (Alternative (..))
+
 data JsonValue
   = JsonNull
   | JsonBool Bool
@@ -24,8 +27,13 @@ instance Functor Parser where
           Just (restInp, val) -> Just (restInp, f val)
       )
 
+instance Alternative Parser where
+  empty = Parser (\input -> Nothing)
+  (Parser p1) <|> (Parser p2) = Parser (\input -> p1 input <|> p2 input)
+
 instance Applicative Parser where
   pure x = Parser (\input -> Just (input, x))
+  (<*>) :: Parser (a -> b) -> Parser a -> Parser b
   (Parser p1) <*> (Parser p2) =
     Parser
       ( \input -> do
@@ -35,7 +43,13 @@ instance Applicative Parser where
       )
 
 jsonNull :: Parser JsonValue
-jsonNull = undefined
+jsonNull = const JsonNull <$> stringP "null"
+
+jsonBool :: Parser JsonValue
+jsonBool = f <$> (stringP "true" <|> stringP "false")
+  where
+    f "true" = JsonBool True
+    f "false" = JsonBool False
 
 charP :: Char -> Parser Char
 charP x = Parser f
@@ -49,7 +63,7 @@ stringP :: String -> Parser String
 stringP = traverse charP
 
 jsonValue :: Parser JsonValue
-jsonValue = undefined
+jsonValue = jsonNull <|> jsonBool
 
 main :: IO ()
 main = undefined
