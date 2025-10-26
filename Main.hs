@@ -4,7 +4,7 @@
 module Main where
 
 import Control.Applicative (Alternative)
-import Data.Char (isDigit)
+import Data.Char (isDigit, isSpace)
 import GHC.Base (Alternative (..))
 
 data JsonValue
@@ -65,6 +65,22 @@ jsonNumber =
 jsonString :: Parser JsonValue
 jsonString = JsonString <$> (charP '"' *> stringLiteral <* charP '"')
 
+jsonArray :: Parser JsonValue
+-- jsonArray = charP '[' *>
+jsonArray =
+  JsonArray
+    <$> ( charP '['
+            *> ((:) <$> (ws *> jsonValue))
+            <*> many (many (ws *> charP ',' <* ws) *> jsonValue)
+            <* charP ']'
+        )
+
+ws :: Parser String
+ws = spanP isSpace
+
+-- seperated :: Parser a -> Parser b -> Parser [b]
+-- seperated sep element =
+
 stringLiteral :: Parser String
 stringLiteral = spanP (/= '"')
 
@@ -88,7 +104,7 @@ stringP :: String -> Parser String
 stringP = traverse charP
 
 jsonValue :: Parser JsonValue
-jsonValue = jsonNull <|> jsonBool <|> jsonNumber <|> jsonString
+jsonValue = jsonNull <|> jsonBool <|> jsonNumber <|> jsonString <|> jsonArray
 
 main :: IO ()
 main = undefined
