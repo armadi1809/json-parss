@@ -53,9 +53,14 @@ jsonBool = f <$> (stringP "true" <|> stringP "false")
     f "false" = JsonBool False
 
 jsonNumber :: Parser JsonValue
-jsonNumber = f <$> spanP isDigit
-  where
-    f s = JsonNumber (read s)
+jsonNumber =
+  Parser
+    ( \input ->
+        case runParser (spanP isDigit) input of
+          Just (rest, "") -> Nothing
+          Just (rest, s) -> Just (rest, JsonNumber (read s))
+          _ -> Nothing
+    )
 
 spanP :: (Char -> Bool) -> Parser String
 spanP f =
