@@ -71,9 +71,19 @@ jsonArray =
   JsonArray
     <$> ( charP '['
             *> ((:) <$> (ws *> jsonValue))
-            <*> many (many (ws *> charP ',' <* ws) *> jsonValue)
+            <*> many ((ws *> charP ',' <* ws) *> jsonValue)
             <* charP ']'
         )
+
+jsonObject :: Parser JsonValue
+jsonObject =
+  JsonObject
+    <$> ( charP '{'
+            *> (pure [] <|> ((:) <$> (ws *> pair)) <*> many ((ws *> charP ',' <* ws) *> pair))
+            <* charP '}'
+        )
+  where
+    pair = (,) <$> (ws *> (charP '"' *> stringLiteral <* charP '"') <* ws <* charP ':') <*> (ws *> jsonValue)
 
 ws :: Parser String
 ws = spanP isSpace
