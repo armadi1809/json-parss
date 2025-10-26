@@ -4,6 +4,7 @@
 module Main where
 
 import Control.Applicative (Alternative)
+import Data.Char (isDigit)
 import GHC.Base (Alternative (..))
 
 data JsonValue
@@ -50,6 +51,19 @@ jsonBool = f <$> (stringP "true" <|> stringP "false")
   where
     f "true" = JsonBool True
     f "false" = JsonBool False
+
+jsonNumber :: Parser JsonValue
+jsonNumber = f <$> spanP isDigit
+  where
+    f s = JsonNumber (read s)
+
+spanP :: (Char -> Bool) -> Parser String
+spanP f =
+  Parser
+    ( \input ->
+        let (tok, res) = span f input
+         in Just (res, tok)
+    )
 
 charP :: Char -> Parser Char
 charP x = Parser f
